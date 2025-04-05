@@ -29,4 +29,7 @@ public class QuotationEntity {
 
     @Column(name = "datetime_last_update_quotation")
     private LocalDateTime dateLastUpdate;
+
+    @Column(name = "automatic_update_value")
+    private boolean automaticUpdateValue;
 }
