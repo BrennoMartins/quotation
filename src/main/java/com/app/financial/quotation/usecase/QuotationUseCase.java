@@ -34,7 +34,7 @@ public class QuotationUseCase {
         quotationEntityRepository.deleteById(id);
     }
 
-    public void updateQuotatio(Quotation quotation){
+    public void updateQuotation(Quotation quotation){
         quotationEntityRepository.save(quotation);
     }
 }

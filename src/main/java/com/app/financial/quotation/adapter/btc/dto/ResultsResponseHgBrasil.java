@@ -15,5 +15,5 @@ public class ResultsResponseHgBrasil {
     private CurrencyResponseHgBrasil currencies;
     private StocksResponseHgBrasil stocks;
     private List<String> available_sources;
-    private List<Object> taxes; // ou crie uma classe se souber a estrutura
+    private List<Object> taxes;
 }
