@@ -38,11 +38,11 @@ dependencies {
 	// Spring Data JDBC
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 
-	// Banco de dados H2 (em memória)
-	//runtimeOnly 'com.h2database:h2'
-
-	// Driver do banco de dados (caso necessário)
+	// Driver data base
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+
+	// Apache POI to read Excel files (.xlsx)
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
 }
 
 tasks.named('test') {
