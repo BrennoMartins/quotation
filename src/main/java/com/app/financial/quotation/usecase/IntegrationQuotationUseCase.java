@@ -5,6 +5,7 @@ import com.app.financial.quotation.adapter.b3.dto.B3Dto;
 import com.app.financial.quotation.adapter.btc.BitcoinGateway;
 import com.app.financial.quotation.adapter.btc.dto.QuoteResponseHgBrasil;
 import com.app.financial.quotation.domain.model.Quotation;
+import com.app.financial.quotation.infrastructure.config.PropertiesConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +19,13 @@ public class IntegrationQuotationUseCase {
     @Autowired
     private QuotationUseCase quotationUseCase;
     private List<B3Dto> listB3Asset;
+    @Autowired
+    private B3Gateway b3Gateway;
+    @Autowired
+    private BitcoinGateway bitcoinGateway;
 
     public void updateAutomaticQuotation() {
-        listB3Asset = Arrays.stream(new B3Gateway().getAllQuotationB3()).toList();
+        listB3Asset = Arrays.stream(b3Gateway.getAllQuotationB3()).toList();
         List<Quotation> quotationsAutomatic = quotationUseCase.getAllQuotation().stream().filter(Quotation::isAutomaticUpdateValue).toList();
         quotationsAutomatic.forEach(this::handlerUpdateQuotation);
     }
@@ -33,7 +38,7 @@ public class IntegrationQuotationUseCase {
     }
 
     private void updateQuotationBitcoin(Quotation bitcoinQuotation) {
-        QuoteResponseHgBrasil quoteResponseHgBrasil = new BitcoinGateway().getQuotationBitcoin();
+        QuoteResponseHgBrasil quoteResponseHgBrasil = bitcoinGateway.getQuotationBitcoin();
         bitcoinQuotation.setValue(BigDecimal.valueOf(quoteResponseHgBrasil.getResults().getCurrencies().getBTC().getSell()));
         bitcoinQuotation.setAutomaticUpdateValue(true);
         quotationUseCase.updateQuotation(bitcoinQuotation);

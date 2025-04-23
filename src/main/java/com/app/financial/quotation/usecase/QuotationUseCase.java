@@ -26,6 +26,10 @@ public class QuotationUseCase {
         return quotationEntityRepository.findAll();
     }
 
+    public List<Quotation> getByAutomatic(Boolean automaticUpdateValue){
+        return quotationEntityRepository.findByAutomaticUpdateValue(automaticUpdateValue);
+    }
+
     public Optional<Quotation> getByIdQuotation(Long id){
         return quotationEntityRepository.findById(id);
     }
