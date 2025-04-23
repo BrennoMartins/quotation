@@ -19,6 +19,8 @@ public class IntegrationQuotationController {
 
     @Autowired
     private IntegrationQuotationUseCase integrationQuotationUseCase;
+    @Autowired
+    private B3Gateway b3Gateway;
 
     @PostMapping
     public ResponseEntity<String> updateQuotation() {
@@ -28,7 +30,7 @@ public class IntegrationQuotationController {
 
     @GetMapping
     public ResponseEntity<List<B3Dto>> getAllB3() {
-        return ResponseEntity.ok(Arrays.stream(new B3Gateway().getAllQuotationB3()).toList());
+        return ResponseEntity.ok(Arrays.stream(b3Gateway.getAllQuotationB3()).toList());
     }
 
 
