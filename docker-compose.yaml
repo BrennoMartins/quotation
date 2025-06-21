@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: meu-postgres-2
+    environment:
+      POSTGRES_USER: usuario
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: finance
+    ports:
+      - "5432:5432" # Mapeando a porta para seu host
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  quotation-app:
+    build: .
+    container_name: quotation-app
+    depends_on:
+      - postgres # Garante que o Postgres está up antes de rodar a app
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8084:8084"  # Porta da sua app
+    networks:
+      - app-network
+    command: ["./gradlew", "bootRun"] # Se for necessário rodar o comando correto (dependendo de como sua app é iniciada)
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

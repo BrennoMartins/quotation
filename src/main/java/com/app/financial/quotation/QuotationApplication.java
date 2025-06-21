@@ -13,4 +13,5 @@ public class QuotationApplication {
 		SpringApplication.run(QuotationApplication.class, args);
 	}
 
+	//TODO COLOCAR O DOCKER E SUBIR APLICACAO java -jar app.jar --spring.profiles.active=prod
 }

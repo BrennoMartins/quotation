@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,6 +42,7 @@ public class IntegrationQuotationUseCase {
     private void updateQuotationBitcoin(Quotation bitcoinQuotation) {
         QuoteResponseHgBrasil quoteResponseHgBrasil = bitcoinGateway.getQuotationBitcoin();
         bitcoinQuotation.setValue(BigDecimal.valueOf(quoteResponseHgBrasil.getResults().getCurrencies().getBTC().getSell()));
+        bitcoinQuotation.setDateLastUpdate(LocalDateTime.now());
         bitcoinQuotation.setAutomaticUpdateValue(true);
         quotationUseCase.updateQuotation(bitcoinQuotation);
     }
@@ -47,6 +50,7 @@ public class IntegrationQuotationUseCase {
     private void defaultQuotation(Quotation defaultQuotation) {
         defaultQuotation.setValue(BigDecimal.ZERO);
         defaultQuotation.setAutomaticUpdateValue(false);
+        defaultQuotation.setDateLastUpdate(LocalDateTime.now());
 
         listB3Asset.forEach(b3Asset -> {
             if(b3Asset.getCodigoNegociacao().equals(defaultQuotation.getName())){
