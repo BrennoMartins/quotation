@@ -34,6 +34,10 @@ public class QuotationUseCase {
         return quotationEntityRepository.findById(id);
     }
 
+    public Optional<Quotation> getByNameQuotation(String name){
+        return quotationEntityRepository.findByName(name);
+    }
+
     public void deleteQuotation(Long id){
         quotationEntityRepository.deleteById(id);
     }

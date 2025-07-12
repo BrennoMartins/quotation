@@ -43,6 +43,13 @@ public class QuotationController {
         return quotationUseCase.getByIdQuotation(id).map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/quotation/name")
+    public ResponseEntity<Quotation> getByQuatotationName(@RequestParam String name){
+        return quotationUseCase.getByNameQuotation(name).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/quotation/filter")
     public ResponseEntity<List<Quotation>> getByAutomatic(@RequestParam("automaticQuotation") Boolean automaticQuotation){
         if(quotationUseCase.getByAutomatic(automaticQuotation).isEmpty()){
