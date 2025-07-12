@@ -26,6 +26,11 @@ public class QuotationEntityRepository implements QuotationRepository {
     }
 
     @Override
+    public Optional<Quotation> findByName(String name) {
+        return jpaRepository.findByName(name).map(quotationEntity -> new QuotationMapper().toQuotation(quotationEntity));
+    }
+
+    @Override
     public List<Quotation>  findByAutomaticUpdateValue(Boolean automaticUpdateValue) {
         return jpaRepository.findByAutomaticUpdateValue(automaticUpdateValue).stream().map(quotationEntity -> new QuotationMapper().toQuotation(quotationEntity)).toList();
     }
