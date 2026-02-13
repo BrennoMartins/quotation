@@ -104,7 +104,7 @@ src/main/java/com/app/financial/quotation/
 
 ---
 
-## API
+## API.
 
 Base URL: `http://localhost:8084/app`
 
