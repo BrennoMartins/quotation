@@ -1,184 +1,227 @@
-# APP QUOTATION
+# Quotation API
 
-A aplicação **Quotation** foi feita usando **Clean Architecture**, separando domínio, aplicação, infraestrutura e interface.  
-Utiliza **Spring Boot + JPA** com uma camada de entidade (`QuotationEntity`) para persistência, mapeada a partir do modelo de domínio (`Quotation`).  
-A API expõe endpoints REST e os dados são manipulados via serviços e repositórios desacoplados.
-
-## Índice
-
-- [Diagrama](#diagrama-architetura-limpa)
-- [Infra - Persistence](#infra---persistence)
-- [Domain - Repository](#domain---repository)
-- [Service](#service)
+REST API for managing financial quotations, with support for B3 assets and Bitcoin quotes via external integrations. Built with **Spring Boot** following **Clean Architecture**.
 
 ---
 
-## Diagrama Architetura Limpa
+## Table of Contents
 
-![Diagrama Clean Architecture](./img/diagrama-clean-architecture.png)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [API](#api)
+- [Configuration](#configuration)
+- [Running the Project](#running-the-project)
+- [External Integrations](#external-integrations)
 
 ---
 
-## Infra - Persistence
+## Features
 
-Nessa camada inserimos tudo relacionado ao framework que escolhemos para comunicar com o banco de dados.  
-Como escolhemos o JPA, vamos primeiro criar o **QuotationMapper**, para transitar do `Model` para `Entity`.
+- **CRUD for quotations** — Create, list, update, and delete quotations.
+- **Search by name** — Get a quotation by asset name.
+- **Filter by automatic update** — List quotations with automatic update enabled or disabled.
+- **Automatic update** — Sync values with B3 (assets) and HgBrasil (Bitcoin).
+- **OpenAPI documentation** — Swagger UI for API exploration.
+- **Monitoring** — Spring Boot Actuator endpoints.
 
-### QuotationMapper
+---
 
-```java
-package com.app.financial.quotation.infrastructure.persistence;
+## Tech Stack
 
-import com.app.financial.quotation.domain.model.Quotation;
-import com.app.financial.quotation.infrastructure.persistence.entities.QuotationEntity;
+| Technology       | Version  | Purpose                |
+|------------------|----------|------------------------|
+| Java             | 23       | Language               |
+| Spring Boot      | 3.4.4    | Framework              |
+| Spring Data JPA  | —        | Persistence            |
+| PostgreSQL       | —        | Database               |
+| Lombok           | 1.18.36  | Boilerplate reduction  |
+| SpringDoc OpenAPI| 2.3.0    | Swagger documentation  |
+| Apache POI       | 5.2.3    | Excel file reading     |
 
-public class QuotationMapper {
+---
 
-    public static QuotationEntity toEntity(Quotation quotation) {
-        QuotationEntity entityQuotation = new QuotationEntity();
-        entityQuotation.setId(quotation.getId());
-        entityQuotation.setName(quotation.getName());
-        entityQuotation.setValue(quotation.getValue());
-        entityQuotation.setDateLastUpdate(quotation.getDateLastUpdate());
-        return entityQuotation;
-    }
+## Architecture
 
-    public static Quotation toDomain(QuotationEntity e) {
-        return new Quotation(e.getId(), e.getName(), e.getValue(), e.getDateLastUpdate());
-    }
-}
+The project follows **Clean Architecture**, with dependencies pointing inward toward the domain:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Controllers (REST)                                              │
+├─────────────────────────────────────────────────────────────────┤
+│  Use Cases (QuotationUseCase, IntegrationQuotationUseCase)       │
+├─────────────────────────────────────────────────────────────────┤
+│  Domain (Quotation, QuotationRepository)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  Adapters (B3Gateway, BitcoinGateway)  │  Infrastructure (JPA)   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- **Domain** — `Quotation` model and `QuotationRepository` interface; no framework dependencies.
+- **Use cases** — Application rules; orchestrate repository and gateways.
+- **Adapters** — Integration with external APIs (B3, HgBrasil).
+- **Infrastructure** — Repository implementation with JPA, Entity ↔ Domain mapping, and configuration.
+
+---
+
+## Project Structure
+
+```
+src/main/java/com/app/financial/quotation/
+├── QuotationApplication.java
+├── controller/
+│   ├── QuotationController.java           # Quotations CRUD
+│   └── IntegrationQuotationController.java  # B3/BTC integrations
+├── domain/
+│   ├── model/
+│   │   └── Quotation.java
+│   └── repository/
+│       └── QuotationRepository.java      # Persistence port
+├── usecase/
+│   ├── QuotationUseCase.java              # CRUD use cases
+│   └── IntegrationQuotationUseCase.java  # Automatic update
+├── adapter/
+│   ├── b3/
+│   │   ├── B3Gateway.java                 # B3 API client
+│   │   └── dto/
+│   │       └── B3Dto.java
+│   └── btc/
+│       ├── BitcoinGateway.java           # HgBrasil client (BTC)
+│       ├── dto/                           # HgBrasil response DTOs
+│       └── exception/                     # BTC error handling
+└── infrastructure/
+    ├── config/
+    │   ├── PropertiesConfiguration.java  # api.b3, api.hgbrasil
+    │   └── RestTemplateConfig.java
+    └── persistence/
+        ├── entities/
+        │   └── QuotationEntity.java       # JPA entity
+        ├── QuotationMapper.java           # Domain ↔ Entity
+        ├── QuotationEntityRepository.java # Repository implementation
+        └── SpringDataQuotationRepository.java # JpaRepository
 ```
 
 ---
 
-### SpringDataQuotationRepository
+## API
 
-Interface para o JPA Spring Cloud
+Base URL: `http://localhost:8084/app`
 
-```java
-package com.app.financial.quotation.infrastructure.persistence;
+### Quotations
 
-import com.app.financial.quotation.infrastructure.persistence.entities.QuotationEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
+| Method   | Endpoint                    | Description                           |
+|----------|-----------------------------|---------------------------------------|
+| `GET`    | `/quotation`                | List all quotations                   |
+| `GET`    | `/quotation/{id}`           | Get quotation by ID                   |
+| `GET`    | `/quotation/name?name=`     | Get quotation by name                 |
+| `GET`    | `/quotation/filter?automaticQuotation=` | Filter by automatic update     |
+| `POST`   | `/quotation`                | Create new quotation                  |
+| `PUT`    | `/quotation/{id}`           | Update quotation                      |
+| `DELETE` | `/quotation/{id}`           | Delete quotation                      |
 
-public interface SpringDataQuotationRepository extends JpaRepository<QuotationEntity, Long> {}
+### Integrations
+
+| Method   | Endpoint                         | Description                                  |
+|----------|----------------------------------|----------------------------------------------|
+| `POST`   | `/quotation/integrations`        | Trigger automatic update (B3 + BTC)          |
+| `GET`    | `/quotation/integrations`        | List quotations returned by B3 API           |
+
+### Interactive documentation
+
+- **Swagger UI:** `http://localhost:8084/quotation/swagger-ui.html`
+- **OpenAPI JSON:** exposed via SpringDoc
+
+---
+
+## Configuration
+
+### Profiles
+
+- `dev` — Development (default in `application.properties`).
+- `prod` — Production.
+
+### Main properties
+
+| Property                  | Description                    | Example (dev)                    |
+|---------------------------|--------------------------------|----------------------------------|
+| `server.port`             | HTTP port                      | `8084`                           |
+| `spring.datasource.url`   | PostgreSQL JDBC URL            | `jdbc:postgresql://localhost:5432/finance` |
+| `spring.datasource.username` | Database user               | `usuario`                        |
+| `spring.datasource.password` | Database password           | `1234`                           |
+| `api.b3`                  | B3 assets API URL              | `http://localhost:8086/app/b3/assets` |
+| `api.hgbrasil`            | HgBrasil API URL (finance/BTC) | `http://localhost:8085/hgbrasil/finance` |
+
+External API URLs are read by `PropertiesConfiguration` (prefix `api`).
+
+### Database
+
+- **PostgreSQL** with schema managed by Hibernate (`ddl-auto=update` in dev).
+- Table: `quotations` (fields mapped in `QuotationEntity`).
+
+---
+
+## Running the Project
+
+### Prerequisites
+
+- **JDK 23**
+- **Gradle** (wrapper included)
+- **PostgreSQL** running, with database `finance` created and credentials set in `application-dev.properties` (or environment variables)
+
+### Command
+
+```bash
+./gradlew bootRun
+```
+
+Or with an explicit profile:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+
+The API will be available at `http://localhost:8084`.
+
+### Build
+
+```bash
+./gradlew build
+```
+
+### Tests
+
+```bash
+./gradlew test
 ```
 
 ---
 
-### JpaQuotationRepository
+## External Integrations
 
-Classe que implementa o [QuotationRepository](#domain---repository)
+### B3 (assets)
 
-```java
-package com.app.financial.quotation.infrastructure.persistence;
+- **Property:** `api.b3`
+- **Purpose:** List assets and closing price to update stored quotations whose name matches the trading code.
+- **Gateway:** `B3Gateway` — GET to configured URL, response mapped to `B3Dto[]`.
 
-import com.app.financial.quotation.domain.model.Quotation;
-import com.app.financial.quotation.domain.repository.QuotationRepository;
-import com.app.financial.quotation.infrastructure.persistence.entities.QuotationEntity;
-import org.springframework.stereotype.Repository;
+### HgBrasil (Bitcoin)
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+- **Property:** `api.hgbrasil`
+- **Purpose:** Bitcoin quote; quotations named `"BTC"` with automatic update enabled are updated with the returned sell value.
+- **Gateway:** `BitcoinGateway` — GET to configured URL, response mapped to `QuoteResponseHgBrasil`.
 
-@Repository
-public class JpaQuotationRepository implements QuotationRepository {
+### Automatic update flow
 
-    private final SpringDataQuotationRepository jpaRepository;
-
-    public JpaQuotationRepository(SpringDataQuotationRepository jpaRepository) {
-        this.jpaRepository = jpaRepository;
-    }
-
-    @Override
-    public Quotation save(Quotation quotation) {
-        QuotationEntity entity = QuotationMapper.toEntity(quotation);
-        return QuotationMapper.toDomain(jpaRepository.save(entity));
-    }
-
-    @Override
-    public Optional<Quotation> findById(Long id) {
-        return jpaRepository.findById(id).map(QuotationMapper::toDomain);
-    }
-
-    @Override
-    public List<Quotation> findAll() {
-        return jpaRepository.findAll().stream()
-                .map(QuotationMapper::toDomain)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
-    }
-}
-```
+1. Client calls `POST /app/quotation/integrations`.
+2. `IntegrationQuotationUseCase` fetches all quotations with automatic update enabled.
+3. For each quotation:
+   - Name `"BTC"` → update via `BitcoinGateway`.
+   - Other names → lookup in B3 list by trading code; on match, update value and keep automatic update enabled.
+4. Values are persisted via `QuotationUseCase.updateQuotation`.
 
 ---
 
-## Domain - Repository
+## License
 
-Interface para quem quiser implementar os métodos para o Banco de Dados:
-
-```java
-package com.app.financial.quotation.domain.repository;
-
-import com.app.financial.quotation.domain.model.Quotation;
-
-import java.util.List;
-import java.util.Optional;
-
-public interface QuotationRepository {
-    Quotation save(Quotation quotation);
-    Optional<Quotation> findById(Long id);
-    List<Quotation> findAll();
-    void deleteById(Long id);
-}
-```
-
----
-
-## Service
-
-`TO DO`
-
-```java
-package com.app.financial.quotation.usecase;
-
-import com.app.financial.quotation.domain.model.Quotation;
-import com.app.financial.quotation.domain.repository.QuotationRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-@Service
-public class QuotationService {
-
-    private final QuotationRepository repository;
-
-    public QuotationService(QuotationRepository repository) {
-        this.repository = repository;
-    }
-
-    public Quotation create(Quotation quotation) {
-        return repository.save(quotation);
-    }
-
-    public List<Quotation> listAll() {
-        return repository.findAll();
-    }
-
-    public Quotation getById(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Quotation not found"));
-    }
-
-    public void delete(Long id) {
-        repository.deleteById(id);
-    }
-}
-```
-
----
+Internal / proprietary use — per project policy.
