@@ -22,7 +22,7 @@ public class IntegrationQuotationController {
     @Autowired
     private B3Gateway b3Gateway;
 
-    @PostMapping
+    @PostMapping(produces = "application/json")
     public ResponseEntity<String> updateQuotation() {
         integrationQuotationUseCase.updateAutomaticQuotation();
         return ResponseEntity.created(null).body("Executado com sucesso");

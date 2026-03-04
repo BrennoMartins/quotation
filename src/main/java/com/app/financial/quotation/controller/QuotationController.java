@@ -25,13 +25,13 @@ public class QuotationController {
         }
     }
 
-    @PostMapping("/quotation")
+    @PostMapping(value = "/quotation", produces = "application/json")
     public ResponseEntity<Quotation> saveQuotation(@RequestBody Quotation quotation){
         quotationUseCase.saveQuotation(quotation);
         return ResponseEntity.created(null).build();
     }
 
-    @PutMapping("/quotation/{id}")
+    @PutMapping(value = "/quotation/{id}", produces = "application/json")
     public ResponseEntity<Quotation> updateQuotation(@PathVariable Long id, @RequestBody Quotation quotation){
         quotation.setId(id);
         quotationUseCase.saveQuotation(quotation);
